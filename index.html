@@ -196,6 +196,56 @@
   .add-format-btn:hover:not(:disabled) { background: #fef4f2; }
   .add-format-btn:disabled { color: #999; border-color: #ccc; cursor: not-allowed; }
 
+  /* Months active grid */
+  .months-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-top: 4px;
+  }
+  @media (max-width: 600px) {
+    .months-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  .month-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    background: #fff;
+    transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
+    user-select: none;
+  }
+  .month-checkbox input {
+    margin: 0;
+    cursor: pointer;
+    accent-color: #ba372a;
+  }
+  .month-checkbox:hover { background: #f4f4f4; }
+  .month-checkbox.checked {
+    background: #fef4f2;
+    border-color: #ba372a;
+    color: #ba372a;
+  }
+
+  /* SP sub-section header */
+  .sub-section-header {
+    font-size: 13px;
+    font-weight: 500;
+    color: #ba372a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 1.25rem;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #f0d6d2;
+  }
+
   .budget-bar {
     background: #fff;
     border: 1px solid #e5e5e5;
@@ -430,6 +480,15 @@ const QTY_DAYS = [1, 2, 3, 4, 5, 7, 10, 14];
 const QTY_CAMPAIGNS = [1, 2];
 const QTY_SP_DURATION = [1, 2, 3, 4, 6, 8, 10, 12];
 const QTY_SP_PRIZE = [1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000];
+const QTY_SP_POS = [0, 5000, 10000, 25000, 50000, 100000];
+const QTY_SP_DIGITAL = [0, 5000, 15000, 30000, 75000];
+const QTY_SP_SAMPLING = [0, 10000, 25000, 50000, 100000];
+
+const FLIGHTING_PATTERNS = [
+  { id: 'continuous', name: 'Continuous (same level of activity across selected months)' },
+  { id: 'burst', name: 'Burst (heavy concentrated activity in selected months)' },
+  { id: 'pulsing', name: 'Pulsing (alternating high and low intensity)' }
+];
 
 /* CPM impression tiers, by inventory availability */
 
@@ -752,6 +811,8 @@ const SP_METRICS = [
    STATE
    ============================================================ */
 
+function makeMonthsArray() { return Array(12).fill(false); }
+
 function makeSlot() {
   return {
     channel: '',
@@ -767,6 +828,8 @@ function makeSlot() {
     qty: 0,
     tier: '',              // for CPM formats
     socialFormats: [{ format: '', tier: '', qty: 0 }],
+    flighting: '',         // continuous, burst, pulsing
+    monthsActive: makeMonthsArray(),  // 12 booleans, M1 = launch month
     objective: '',
     metric: '',
     rationale: ''
@@ -781,7 +844,12 @@ const state = {
     incentive: '',
     prizeFund: 0,
     adminCost: 0,
+    posCost: 0,
+    digitalCost: 0,
+    samplingCost: 0,
     duration: 0,
+    flighting: '',
+    monthsActive: makeMonthsArray(),
     objective: '',
     metric: '',
     rationale: ''
@@ -862,7 +930,11 @@ function calcSlotSubtotal(slot) {
 }
 
 function calcSPSubtotal(sp) {
-  return (parseFloat(sp.prizeFund) || 0) + (parseFloat(sp.adminCost) || 0);
+  return (parseFloat(sp.prizeFund) || 0)
+       + (parseFloat(sp.adminCost) || 0)
+       + (parseFloat(sp.posCost) || 0)
+       + (parseFloat(sp.digitalCost) || 0)
+       + (parseFloat(sp.samplingCost) || 0);
 }
 
 /* Generate admin/logistics dropdown options. Larger prize fund and longer duration
@@ -961,6 +1033,8 @@ function isSlotComplete(slot) {
   }
   if (!slot.objective || !slot.metric) return false;
   if (!slot.rationale || !slot.rationale.trim()) return false;
+  if (!slot.flighting) return false;
+  if (!slot.monthsActive.some(m => m)) return false;
   return true;
 }
 
@@ -972,6 +1046,8 @@ function isSPComplete(sp) {
   if (!sp.duration || sp.duration <= 0) return false;
   if (!sp.objective || !sp.metric) return false;
   if (!sp.rationale || !sp.rationale.trim()) return false;
+  if (!sp.flighting) return false;
+  if (!sp.monthsActive.some(m => m)) return false;
   return true;
 }
 
@@ -1071,6 +1147,37 @@ function renderQtyDropdown(num, value, label, options) {
         <option value="">Select quantity</option>
         ${options.map(o => `<option value="${o}"${value == o ? ' selected' : ''}>${o}</option>`).join('')}
       </select>
+    </div>
+  `;
+}
+
+/* Flighting and months grid - work for both slots (data-slot="1") and SP (data-target="sp") */
+function renderFlightingField(idPrefix, value, slotAttrs) {
+  return `
+    <div class="field-group">
+      <label for="fl-${idPrefix}">Flighting pattern</label>
+      <select id="fl-${idPrefix}" ${slotAttrs} data-field="flighting">
+        <option value="">Select flighting pattern</option>
+        ${FLIGHTING_PATTERNS.map(p => `<option value="${p.id}"${value === p.id ? ' selected' : ''}>${p.name}</option>`).join('')}
+      </select>
+      <div class="field-help">Continuous keeps activity constant. Burst concentrates spend in short heavy windows. Pulsing alternates higher and lower intensity across the campaign.</div>
+    </div>
+  `;
+}
+
+function renderMonthsGrid(idPrefix, monthsActive, slotAttrs) {
+  return `
+    <div class="field-group">
+      <label>Months active (M1 = launch month)</label>
+      <div class="months-grid">
+        ${monthsActive.map((active, i) => `
+          <label class="month-checkbox${active ? ' checked' : ''}">
+            <input type="checkbox" ${slotAttrs} data-month="${i}"${active ? ' checked' : ''}>
+            <span>M${i + 1}</span>
+          </label>
+        `).join('')}
+      </div>
+      <div class="field-help">Tick all months when this activity will be in-market. M1 is the month of launch.</div>
     </div>
   `;
 }
@@ -1452,11 +1559,16 @@ function renderSlot(num) {
   // Common fields appear once we have a subtotal
   if (subtotal > 0) {
     html += `<div class="subtotal-display"><span class="label">Subtotal for this slot</span><span class="value">${fmt(subtotal)}</span></div>`;
-    html += renderObjectiveField(slot, num);
-    if (slot.objective) {
-      html += renderMetricField(slot, num);
-      if (slot.metric) {
-        html += renderRationaleField(slot, num);
+    html += `<div class="sub-section-header">Flighting</div>`;
+    html += renderFlightingField('s' + num, slot.flighting, `data-slot="${num}"`);
+    html += renderMonthsGrid('s' + num, slot.monthsActive, `data-slot="${num}"`);
+    if (slot.flighting && slot.monthsActive.some(m => m)) {
+      html += renderObjectiveField(slot, num);
+      if (slot.objective) {
+        html += renderMetricField(slot, num);
+        if (slot.metric) {
+          html += renderRationaleField(slot, num);
+        }
       }
     }
   }
@@ -1527,37 +1639,80 @@ function renderSalesPromotion() {
     `;
   }
 
-  if (subtotal > 0) {
-    html += `<div class="subtotal-display"><span class="label">Sales promotion subtotal</span><span class="value">${fmt(subtotal)}</span></div>`;
-    // Objective
+  // Promotional support section appears after admin is chosen.
+  // These costs cover advertising the promotion: POS materials, digital amplification,
+  // and (for sampling mechanics only) field activation costs.
+  if (sp.prizeFund > 0 && sp.duration > 0 && sp.adminCost > 0) {
+    html += `<div class="sub-section-header">Promotional support (how consumers will hear about the promotion)</div>`;
     html += `
-      <div class="field-group">
-        <label for="sp-ob">Promotion objective (from Section 5.2)</label>
-        <select id="sp-ob" data-target="sp" data-field="objective">
-          <option value="">Select an objective</option>
-          ${OBJECTIVES.map(o => `<option value="${o.id}"${sp.objective === o.id ? ' selected' : ''}>${o.name}</option>`).join('')}
-        </select>
+      <div class="field-row">
+        <div class="field-group">
+          <label for="sp-pos">Point of sale (POS)</label>
+          <select id="sp-pos" data-target="sp" data-field="posCost">
+            <option value="">Select POS support level</option>
+            ${QTY_SP_POS.map(o => `<option value="${o}"${sp.posCost == o ? ' selected' : ''}>${o === 0 ? 'None' : fmt(o)}</option>`).join('')}
+          </select>
+          <div class="field-help">Shelf wobblers, gondola ends, on-pack flashes, leaflets.</div>
+        </div>
+        <div class="field-group">
+          <label for="sp-dig">Digital amplification</label>
+          <select id="sp-dig" data-target="sp" data-field="digitalCost">
+            <option value="">Select digital support level</option>
+            ${QTY_SP_DIGITAL.map(o => `<option value="${o}"${sp.digitalCost == o ? ' selected' : ''}>${o === 0 ? 'None' : fmt(o)}</option>`).join('')}
+          </select>
+          <div class="field-help">Microsite or landing page, organic social, paid social burst dedicated to the promotion.</div>
+        </div>
       </div>
     `;
-    if (sp.objective) {
-      // Metric
+    if (sp.mechanic === 'sampling') {
       html += `
         <div class="field-group">
-          <label for="sp-mt">Performance metric</label>
-          <select id="sp-mt" data-target="sp" data-field="metric">
-            <option value="">Select a metric</option>
-            ${SP_METRICS.map(m => `<option value="${escapeHtml(m)}"${sp.metric === m ? ' selected' : ''}>${escapeHtml(m)}</option>`).join('')}
+          <label for="sp-samp">Sampling activation</label>
+          <select id="sp-samp" data-target="sp" data-field="samplingCost">
+            <option value="">Select sampling activation level</option>
+            ${QTY_SP_SAMPLING.map(o => `<option value="${o}"${sp.samplingCost == o ? ' selected' : ''}>${o === 0 ? 'None' : fmt(o)}</option>`).join('')}
+          </select>
+          <div class="field-help">Field staff days for in-store or in-venue sampling activation.</div>
+        </div>
+      `;
+    }
+  }
+
+  // Subtotal, flighting, and the rest of the SP block - all gated on admin being chosen
+  if (sp.prizeFund > 0 && sp.duration > 0 && sp.adminCost > 0) {
+    html += `<div class="subtotal-display"><span class="label">Sales promotion subtotal</span><span class="value">${fmt(subtotal)}</span></div>`;
+    html += `<div class="sub-section-header">Flighting</div>`;
+    html += renderFlightingField('sp', sp.flighting, `data-target="sp"`);
+    html += renderMonthsGrid('sp', sp.monthsActive, `data-target="sp"`);
+
+    if (sp.flighting && sp.monthsActive.some(m => m)) {
+      html += `
+        <div class="field-group">
+          <label for="sp-ob">Promotion objective (from Section 5.2)</label>
+          <select id="sp-ob" data-target="sp" data-field="objective">
+            <option value="">Select an objective</option>
+            ${OBJECTIVES.map(o => `<option value="${o.id}"${sp.objective === o.id ? ' selected' : ''}>${o.name}</option>`).join('')}
           </select>
         </div>
       `;
-      if (sp.metric) {
-        // Rationale
+      if (sp.objective) {
         html += `
           <div class="field-group">
-            <label for="sp-rt">Strategic rationale</label>
-            <textarea id="sp-rt" data-target="sp" data-field="rationale" placeholder="Explain why this sales promotion mechanic suits your campaign. Reference (1) your persona from Section 1.1, (2) how this promotion supports your Think, Feel, Do from Section 5.3, and (3) how it expresses your execution theme from Section 5.4.">${escapeHtml(sp.rationale)}</textarea>
+            <label for="sp-mt">Performance metric</label>
+            <select id="sp-mt" data-target="sp" data-field="metric">
+              <option value="">Select a metric</option>
+              ${SP_METRICS.map(m => `<option value="${escapeHtml(m)}"${sp.metric === m ? ' selected' : ''}>${escapeHtml(m)}</option>`).join('')}
+            </select>
           </div>
         `;
+        if (sp.metric) {
+          html += `
+            <div class="field-group">
+              <label for="sp-rt">Strategic rationale</label>
+              <textarea id="sp-rt" data-target="sp" data-field="rationale" placeholder="Explain why this sales promotion mechanic suits your campaign. Reference (1) your persona from Section 1.1, (2) how this promotion supports your Think, Feel, Do from Section 5.3, and (3) how it expresses your execution theme from Section 5.4.">${escapeHtml(sp.rationale)}</textarea>
+            </div>
+          `;
+        }
       }
     }
   }
@@ -1642,9 +1797,14 @@ function attachListeners() {
       el.addEventListener('change', handleSPSelect);
     } else if (el.type === 'number') {
       el.addEventListener('input', handleSPNumber);
-    } else {
+    } else if (el.type !== 'checkbox') {
       el.addEventListener('input', handleSPText);
     }
+  });
+
+  // Month checkbox toggles for both slots and SP
+  document.querySelectorAll('input[type="checkbox"][data-month]').forEach(el => {
+    el.addEventListener('change', handleMonthToggle);
   });
 }
 
@@ -1711,6 +1871,8 @@ function handleSelectChange(e) {
   } else if (field === 'socialQty') {
     const idx = parseInt(e.target.dataset.index);
     slot.socialFormats[idx].qty = parseFloat(value) || 0;
+  } else if (field === 'flighting') {
+    slot.flighting = value;
   } else if (field === 'objective' || field === 'metric') {
     slot[field] = value;
   }
@@ -1768,7 +1930,8 @@ function handleRemoveFormat(e) {
 function handleSPSelect(e) {
   const field = e.target.dataset.field;
   const value = e.target.value;
-  if (field === 'duration' || field === 'prizeFund' || field === 'adminCost') {
+  if (field === 'duration' || field === 'prizeFund' || field === 'adminCost' ||
+      field === 'posCost' || field === 'digitalCost' || field === 'samplingCost') {
     state.salesProm[field] = parseFloat(value) || 0;
   } else {
     state.salesProm[field] = value;
@@ -1778,11 +1941,20 @@ function handleSPSelect(e) {
   if (field === 'prizeFund' || field === 'duration') {
     state.salesProm.adminCost = 0;
   }
+  // If mechanic changes away from sampling, clear sampling cost
+  if (field === 'mechanic' && value !== 'sampling') {
+    state.salesProm.samplingCost = 0;
+  }
   if (field === 'mechanic' && !value) {
     state.salesProm.incentive = '';
     state.salesProm.prizeFund = 0;
     state.salesProm.adminCost = 0;
+    state.salesProm.posCost = 0;
+    state.salesProm.digitalCost = 0;
+    state.salesProm.samplingCost = 0;
     state.salesProm.duration = 0;
+    state.salesProm.flighting = '';
+    state.salesProm.monthsActive = makeMonthsArray();
     state.salesProm.objective = '';
     state.salesProm.metric = '';
     state.salesProm.rationale = '';
@@ -1806,6 +1978,35 @@ function handleSPText(e) {
   const field = e.target.dataset.field;
   state.salesProm[field] = e.target.value;
   renderBudget();
+}
+
+/* Month checkbox toggling. Works for both slots (data-slot) and SP (data-target="sp").
+   Updates the state array and updates the visual checked class without rebuilding the whole DOM. */
+function handleMonthToggle(e) {
+  const monthIdx = parseInt(e.target.dataset.month);
+  let target;
+  if (e.target.dataset.slot) {
+    target = state['slot' + e.target.dataset.slot];
+  } else if (e.target.dataset.target === 'sp') {
+    target = state.salesProm;
+  }
+  if (!target) return;
+  target.monthsActive[monthIdx] = e.target.checked;
+  // Update the parent label's visual state without rebuilding the DOM
+  const parent = e.target.closest('.month-checkbox');
+  if (parent) {
+    if (e.target.checked) parent.classList.add('checked');
+    else parent.classList.remove('checked');
+  }
+  // Just update validation/budget - no need to re-render the form
+  renderBudget();
+  // After enabling/disabling months, we may need to reveal subsequent fields
+  // (objective is gated on at least one month being active). Trigger a renderAll
+  // only when this is the first month enabled or the last month disabled.
+  const activeCount = target.monthsActive.filter(m => m).length;
+  if (activeCount === 0 || activeCount === 1) {
+    renderAll();
+  }
 }
 
 /* ============================================================
@@ -1932,6 +2133,8 @@ function describeSlot(slot) {
     quantity: quantityDesc,
     rate: rateDesc,
     subtotal: subtotal,
+    flighting: slot.flighting,
+    monthsActive: slot.monthsActive,
     objective: obj ? obj.name : '',
     metric: slot.metric,
     rationale: slot.rationale
@@ -1946,12 +2149,24 @@ function describeSP(sp) {
     incentive: sp.incentive,
     prizeFund: parseFloat(sp.prizeFund) || 0,
     adminCost: parseFloat(sp.adminCost) || 0,
+    posCost: parseFloat(sp.posCost) || 0,
+    digitalCost: parseFloat(sp.digitalCost) || 0,
+    samplingCost: parseFloat(sp.samplingCost) || 0,
     duration: sp.duration,
     subtotal: calcSPSubtotal(sp),
+    flighting: sp.flighting,
+    monthsActive: sp.monthsActive,
     objective: obj ? obj.name : '',
     metric: sp.metric,
     rationale: sp.rationale
   };
+}
+
+function formatSchedule(flighting, monthsActive) {
+  if (!flighting || !monthsActive || !monthsActive.some(m => m)) return '-';
+  const flightingNames = { continuous: 'Continuous', burst: 'Burst', pulsing: 'Pulsing' };
+  const months = monthsActive.map((a, i) => a ? 'M' + (i + 1) : null).filter(Boolean).join(', ');
+  return `${flightingNames[flighting] || flighting}: ${months}`;
 }
 
 function generatePlan() {
@@ -1971,11 +2186,20 @@ function generatePlan() {
       <td>${escapeHtml(s.quantity)}</td>
       <td class="num">${escapeHtml(s.rate)}</td>
       <td class="num">${fmt(s.subtotal)}</td>
+      <td>${formatSchedule(s.flighting, s.monthsActive)}</td>
       <td>${escapeHtml(s.objective)}</td>
       <td>${escapeHtml(s.metric)}</td>
       <td>${escapeHtml(s.rationale)}</td>
     </tr>
   `;
+
+  const spBreakdown = [
+    `Prize fund: ${fmt(sp.prizeFund)}`,
+    `Admin and logistics: ${fmt(sp.adminCost)}`,
+    sp.posCost > 0 ? `POS support: ${fmt(sp.posCost)}` : null,
+    sp.digitalCost > 0 ? `Digital amplification: ${fmt(sp.digitalCost)}` : null,
+    sp.samplingCost > 0 ? `Sampling activation: ${fmt(sp.samplingCost)}` : null
+  ].filter(Boolean).join('<br>');
 
   const tableHtml = `
     <div class="output-overflow">
@@ -1989,24 +2213,26 @@ function generatePlan() {
           <th>Quantity / scale</th>
           <th class="num">Rate</th>
           <th class="num">Subtotal</th>
+          <th>Schedule (flighting + months)</th>
           <th>Objective</th>
           <th>Metric</th>
           <th>Strategic rationale</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="section-divider"><td colspan="10">Paid media</td></tr>
+        <tr class="section-divider"><td colspan="11">Paid media</td></tr>
         ${slotRow(slot1)}
         ${slotRow(slot2)}
-        <tr class="section-divider"><td colspan="10">Sales promotion</td></tr>
+        <tr class="section-divider"><td colspan="11">Sales promotion</td></tr>
         <tr>
           <td>Sales promotion</td>
           <td>${escapeHtml(sp.mechanic)}</td>
           <td>${escapeHtml(sp.incentive)}</td>
-          <td>Prize fund ${fmt(sp.prizeFund)}; Admin ${fmt(sp.adminCost)}</td>
+          <td>${spBreakdown}</td>
           <td>${escapeHtml(sp.duration)} week${sp.duration > 1 ? 's' : ''}</td>
           <td class="num">-</td>
           <td class="num">${fmt(sp.subtotal)}</td>
+          <td>${formatSchedule(sp.flighting, sp.monthsActive)}</td>
           <td>${escapeHtml(sp.objective)}</td>
           <td>${escapeHtml(sp.metric)}</td>
           <td>${escapeHtml(sp.rationale)}</td>
@@ -2014,7 +2240,7 @@ function generatePlan() {
         <tr class="total-row">
           <td colspan="6" style="text-align: right;">Total IMC budget</td>
           <td class="num">${fmt(total)}</td>
-          <td colspan="3"></td>
+          <td colspan="4"></td>
         </tr>
       </tbody>
     </table>
@@ -2027,13 +2253,17 @@ function generatePlan() {
     <div class="output-card">
       <div class="output-header">
         <h2>Your IMC plan</h2>
-        <button class="btn-secondary btn-small" id="copy-btn">Copy table</button>
+        <div>
+          <button class="btn-secondary btn-small" id="copy-btn">Copy table</button>
+          <button class="btn-secondary btn-small" id="word-btn" style="margin-left: 6px;">Export to Word</button>
+        </div>
       </div>
       ${tableHtml}
       <div class="copy-hint">Click "Copy table" then paste directly into Section 5.5 of your Word document. The table will retain its structure. Also take a screenshot of this dashboard for your Assessment 3 appendix.</div>
     </div>
   `;
   document.getElementById('copy-btn').addEventListener('click', copyTable);
+  document.getElementById('word-btn').addEventListener('click', exportToWord);
   out.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -2076,6 +2306,165 @@ function showCopied() {
   const btn = document.getElementById('copy-btn');
   const orig = btn.textContent;
   btn.textContent = 'Copied';
+  setTimeout(() => { btn.textContent = orig; }, 2000);
+}
+
+/* Export to Word document. Generates HTML with Word-specific page styling
+   (landscape A4, margins) and triggers a download as a .doc file. Microsoft
+   Word and most word processors open this cleanly. */
+function exportToWord() {
+  if (!isPlanValid()) return;
+  const slot1 = describeSlot(state.slot1);
+  const slot2 = describeSlot(state.slot2);
+  const sp = describeSP(state.salesProm);
+  const total = slot1.subtotal + slot2.subtotal + sp.subtotal;
+
+  const slotRowWord = (s, label) => `
+    <tr>
+      <td><strong>${label}</strong></td>
+      <td>${escapeHtml(s.channel)}</td>
+      <td>${escapeHtml(s.subtype)}</td>
+      <td>${escapeHtml(s.mediaName)}</td>
+      <td>${escapeHtml(s.format)}</td>
+      <td>${escapeHtml(s.quantity)}</td>
+      <td>${escapeHtml(s.rate)}</td>
+      <td style="text-align: right;">${fmt(s.subtotal)}</td>
+      <td>${formatSchedule(s.flighting, s.monthsActive)}</td>
+      <td>${escapeHtml(s.objective)}</td>
+      <td>${escapeHtml(s.metric)}</td>
+      <td>${escapeHtml(s.rationale)}</td>
+    </tr>
+  `;
+
+  const spBreakdownLines = [
+    `Prize fund: ${fmt(sp.prizeFund)}`,
+    `Admin and logistics: ${fmt(sp.adminCost)}`,
+    sp.posCost > 0 ? `POS support: ${fmt(sp.posCost)}` : null,
+    sp.digitalCost > 0 ? `Digital amplification: ${fmt(sp.digitalCost)}` : null,
+    sp.samplingCost > 0 ? `Sampling activation: ${fmt(sp.samplingCost)}` : null
+  ].filter(Boolean).join('<br>');
+
+  const wordHtml = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>MKTG1025 IMC Media Plan</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>90</w:Zoom>
+<w:DoNotPromptForConvert/>
+<w:DoNotShowInsertionsAndDeletions/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+@page WordSection1 {
+  size: 297mm 210mm mso-page-orientation: landscape;
+  mso-page-orientation: landscape;
+  margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+}
+div.WordSection1 { page: WordSection1; }
+body { font-family: Calibri, sans-serif; font-size: 10pt; color: #1a1a1a; }
+h1 { color: #ba372a; font-size: 18pt; margin-bottom: 4pt; }
+h2 { color: #ba372a; font-size: 13pt; margin-top: 18pt; margin-bottom: 6pt; }
+.subtitle { font-size: 10pt; color: #666; margin-bottom: 12pt; }
+table { border-collapse: collapse; width: 100%; margin-top: 6pt; }
+th, td { border: 0.75pt solid #999; padding: 4pt 5pt; vertical-align: top; font-size: 9pt; }
+th { background: #f4f4f4; text-align: left; font-weight: bold; }
+.total-row td { background: #f9f9f9; font-weight: bold; }
+.budget-summary table { width: auto; min-width: 50%; }
+.budget-summary td { padding: 6pt 12pt; }
+</style>
+</head>
+<body>
+<div class="WordSection1">
+<h1>MKTG1025 IMC Media Plan</h1>
+<div class="subtitle">Section 5.5 - Assessment 3 - Marketing Plan Part B</div>
+
+<h2>Paid Media</h2>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>Channel</th>
+<th>Sub-type</th>
+<th>Title / programme</th>
+<th>Format</th>
+<th>Quantity / scale</th>
+<th>Rate</th>
+<th>Subtotal</th>
+<th>Schedule (flighting + months)</th>
+<th>Objective</th>
+<th>Metric</th>
+<th>Strategic rationale</th>
+</tr>
+</thead>
+<tbody>
+${slotRowWord(slot1, 'Media 1')}
+${slotRowWord(slot2, 'Media 2')}
+</tbody>
+</table>
+
+<h2>Sales Promotion</h2>
+<table>
+<thead>
+<tr>
+<th style="width: 14%;">Mechanic</th>
+<th style="width: 18%;">Incentive description</th>
+<th style="width: 18%;">Cost breakdown</th>
+<th style="width: 8%;">Duration</th>
+<th style="width: 10%;">Subtotal</th>
+<th style="width: 14%;">Schedule</th>
+<th style="width: 18%;">Objective, metric, and rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>${escapeHtml(sp.mechanic)}</td>
+<td>${escapeHtml(sp.incentive)}</td>
+<td>${spBreakdownLines}</td>
+<td>${escapeHtml(sp.duration)} week${sp.duration > 1 ? 's' : ''}</td>
+<td style="text-align: right;">${fmt(sp.subtotal)}</td>
+<td>${formatSchedule(sp.flighting, sp.monthsActive)}</td>
+<td>
+<strong>Objective:</strong> ${escapeHtml(sp.objective)}<br>
+<strong>Metric:</strong> ${escapeHtml(sp.metric)}<br>
+<strong>Rationale:</strong> ${escapeHtml(sp.rationale)}
+</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Budget Summary</h2>
+<div class="budget-summary">
+<table>
+<tr><td>Media format 1</td><td style="text-align: right;">${fmt(slot1.subtotal)}</td></tr>
+<tr><td>Media format 2</td><td style="text-align: right;">${fmt(slot2.subtotal)}</td></tr>
+<tr><td>Sales promotion</td><td style="text-align: right;">${fmt(sp.subtotal)}</td></tr>
+<tr class="total-row"><td>Total IMC budget</td><td style="text-align: right;">${fmt(total)}</td></tr>
+<tr><td>Remaining of $1,000,000 cap</td><td style="text-align: right;">${fmt(1000000 - total)}</td></tr>
+</table>
+</div>
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'MKTG1025-media-plan.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Visual feedback
+  const btn = document.getElementById('word-btn');
+  const orig = btn.textContent;
+  btn.textContent = 'Downloaded';
   setTimeout(() => { btn.textContent = orig; }, 2000);
 }
 
