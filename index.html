@@ -1568,13 +1568,13 @@ function renderAll() {
 
 function attachListeners() {
   // Slot fields (selects rebuild slot; text/textarea/number update state)
-  document.querySelectorAll('[data-slot] select').forEach(el => {
+  document.querySelectorAll('select[data-slot]').forEach(el => {
     el.addEventListener('change', handleSelectChange);
   });
-  document.querySelectorAll('[data-slot] input[type="number"]').forEach(el => {
+  document.querySelectorAll('input[data-slot][type="number"]').forEach(el => {
     el.addEventListener('input', handleNumberInput);
   });
-  document.querySelectorAll('[data-slot] input[type="text"], [data-slot] textarea').forEach(el => {
+  document.querySelectorAll('input[data-slot][type="text"], textarea[data-slot]').forEach(el => {
     el.addEventListener('input', handleTextInput);
     el.addEventListener('change', () => renderAll());
   });
