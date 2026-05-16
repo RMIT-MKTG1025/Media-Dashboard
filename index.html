@@ -419,6 +419,17 @@
 
 const BUDGET_CAP = 1000000;
 
+/* Quantity dropdown options. Lists realistic media-planning scales rather than free text. */
+const QTY_INSERTIONS = [1, 2, 3, 4, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100];
+const QTY_READS = [1, 2, 3, 4, 5, 7, 10, 15, 20, 25, 30, 40, 50];
+const QTY_WEEKS = [1, 2, 3, 4, 6, 8, 10, 12, 16, 20, 24, 36, 52];
+const QTY_MONTHS = [1, 2, 3, 4, 6, 9, 12];
+const QTY_EPISODES = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20];
+const QTY_SENDS = [1, 2, 3, 4, 5, 6, 8, 10, 12];
+const QTY_DAYS = [1, 2, 3, 4, 5, 7, 10, 14];
+const QTY_CAMPAIGNS = [1, 2];
+const QTY_SP_DURATION = [1, 2, 3, 4, 6, 8, 10, 12];
+
 /* CPM impression tiers, by inventory availability */
 
 const TIERS_STANDARD = [
@@ -1019,6 +1030,18 @@ function renderRationaleField(slot, num) {
   `;
 }
 
+function renderQtyDropdown(num, value, label, options) {
+  return `
+    <div class="field-group" style="margin-top: 12px;">
+      <label for="qt-${num}">${label}</label>
+      <select id="qt-${num}" data-slot="${num}" data-field="qty">
+        <option value="">Select quantity</option>
+        ${options.map(o => `<option value="${o}"${value == o ? ' selected' : ''}>${o}</option>`).join('')}
+      </select>
+    </div>
+  `;
+}
+
 /* ============================================================
    RENDERING - CHANNEL-SPECIFIC
    ============================================================ */
@@ -1077,12 +1100,7 @@ function renderTV(slot, num) {
   const rate = getTVRate(slot.tvAdType, slot.daypart, slot.duration);
   if (rate > 0) {
     html += `<div class="rate-display"><strong>Rate:</strong> ${fmt(rate)} per insertion</div>`;
-    html += `
-      <div class="field-group" style="margin-top: 12px;">
-        <label for="qt-${num}">Number of insertions</label>
-        <input type="number" id="qt-${num}" data-slot="${num}" data-field="qty" min="0" step="1" value="${slot.qty || ''}" placeholder="Enter quantity">
-      </div>
-    `;
+    html += renderQtyDropdown(num, slot.qty, 'Number of insertions', QTY_INSERTIONS);
   }
   return html;
 }
@@ -1150,13 +1168,9 @@ function renderRadio(slot, num) {
   if (rate > 0) {
     const unit = slot.radioFormat === 'liveread' ? 'per read' : (slot.radioFormat === 'sponsorship' ? 'per week' : 'per insertion');
     const qtyLabel = slot.radioFormat === 'liveread' ? 'Number of reads' : (slot.radioFormat === 'sponsorship' ? 'Number of weeks' : 'Number of spots');
+    const qtyOpts = slot.radioFormat === 'liveread' ? QTY_READS : (slot.radioFormat === 'sponsorship' ? QTY_WEEKS : QTY_INSERTIONS);
     html += `<div class="rate-display"><strong>Rate:</strong> ${fmt(rate)} ${unit}</div>`;
-    html += `
-      <div class="field-group" style="margin-top: 12px;">
-        <label for="qt-${num}">${qtyLabel}</label>
-        <input type="number" id="qt-${num}" data-slot="${num}" data-field="qty" min="0" step="1" value="${slot.qty || ''}" placeholder="Enter quantity">
-      </div>
-    `;
+    html += renderQtyDropdown(num, slot.qty, qtyLabel, qtyOpts);
   }
   return html;
 }
@@ -1184,12 +1198,7 @@ function renderPodcast(slot, num) {
   if (f.unit === 'CPM') {
     html += renderTierDropdown(slot, num, f);
   } else {
-    html += `
-      <div class="field-group" style="margin-top: 12px;">
-        <label for="qt-${num}">${f.qtyLabel}</label>
-        <input type="number" id="qt-${num}" data-slot="${num}" data-field="qty" min="0" step="1" value="${slot.qty || ''}" placeholder="Enter quantity">
-      </div>
-    `;
+    html += renderQtyDropdown(num, slot.qty, f.qtyLabel, QTY_EPISODES);
   }
   return html;
 }
@@ -1213,12 +1222,8 @@ function renderOOH(slot, num) {
 
   const f = formats.find(x => x.id === slot.format);
   html += `<div class="rate-display"><strong>Rate:</strong> ${fmt(f.rate)} ${f.unit}</div>`;
-  html += `
-    <div class="field-group" style="margin-top: 12px;">
-      <label for="qt-${num}">${f.qtyLabel}</label>
-      <input type="number" id="qt-${num}" data-slot="${num}" data-field="qty" min="0" step="1" value="${slot.qty || ''}" placeholder="Enter quantity">
-    </div>
-  `;
+  const oohQtyOpts = f.unit === 'per week' ? QTY_WEEKS : QTY_MONTHS;
+  html += renderQtyDropdown(num, slot.qty, f.qtyLabel, oohQtyOpts);
   return html;
 }
 
@@ -1248,12 +1253,7 @@ function renderDisplay(slot, num) {
   if (f.unit === 'CPM') {
     html += renderTierDropdown(slot, num, f);
   } else {
-    html += `
-      <div class="field-group" style="margin-top: 12px;">
-        <label for="qt-${num}">${f.qtyLabel}</label>
-        <input type="number" id="qt-${num}" data-slot="${num}" data-field="qty" min="0" step="1" value="${slot.qty || ''}" placeholder="Enter quantity">
-      </div>
-    `;
+    html += renderQtyDropdown(num, slot.qty, f.qtyLabel, QTY_SENDS);
   }
   return html;
 }
@@ -1277,12 +1277,7 @@ function renderMagazine(slot, num) {
   if (!slot.format) return html;
   const f = MAGAZINE_FORMATS.find(x => x.id === slot.format);
   html += `<div class="rate-display"><strong>Rate:</strong> ${fmt(f.rate)} ${f.unit}</div>`;
-  html += `
-    <div class="field-group" style="margin-top: 12px;">
-      <label for="qt-${num}">${f.qtyLabel}</label>
-      <input type="number" id="qt-${num}" data-slot="${num}" data-field="qty" min="0" step="1" value="${slot.qty || ''}" placeholder="Enter quantity">
-    </div>
-  `;
+  html += renderQtyDropdown(num, slot.qty, f.qtyLabel, QTY_INSERTIONS);
   return html;
 }
 
@@ -1338,10 +1333,14 @@ function renderSocial(slot, num) {
           </div>
         `;
       } else if (f.unit === 'flat') {
+        const socialFlatOpts = f.id === 'bhc' ? QTY_CAMPAIGNS : QTY_DAYS;
         html += `
           <div class="field-group">
             <label>${f.qtyLabel}</label>
-            <input type="number" data-slot="${num}" data-field="socialQty" data-index="${idx}" min="0" step="1" value="${row.qty || ''}" placeholder="Enter quantity">
+            <select data-slot="${num}" data-field="socialQty" data-index="${idx}">
+              <option value="">Select quantity</option>
+              ${socialFlatOpts.map(o => `<option value="${o}"${row.qty == o ? ' selected' : ''}>${o}</option>`).join('')}
+            </select>
           </div>
         `;
       }
@@ -1474,7 +1473,10 @@ function renderSalesPromotion() {
     </div>
     <div class="field-group">
       <label for="sp-dur">Duration (weeks)</label>
-      <input type="number" id="sp-dur" data-target="sp" data-field="duration" min="0" step="1" value="${sp.duration || ''}" placeholder="Number of weeks">
+      <select id="sp-dur" data-target="sp" data-field="duration">
+        <option value="">Select duration</option>
+        ${QTY_SP_DURATION.map(o => `<option value="${o}"${sp.duration == o ? ' selected' : ''}>${o} week${o > 1 ? 's' : ''}</option>`).join('')}
+      </select>
     </div>
   `;
 
@@ -1649,6 +1651,8 @@ function handleSelectChange(e) {
     slot.qty = 0;
   } else if (field === 'tier') {
     slot.tier = value;
+  } else if (field === 'qty') {
+    slot.qty = parseFloat(value) || 0;
   } else if (field === 'socialFormat') {
     const idx = parseInt(e.target.dataset.index);
     slot.socialFormats[idx].format = value;
@@ -1657,6 +1661,9 @@ function handleSelectChange(e) {
   } else if (field === 'socialTier') {
     const idx = parseInt(e.target.dataset.index);
     slot.socialFormats[idx].tier = value;
+  } else if (field === 'socialQty') {
+    const idx = parseInt(e.target.dataset.index);
+    slot.socialFormats[idx].qty = parseFloat(value) || 0;
   } else if (field === 'objective' || field === 'metric') {
     slot[field] = value;
   }
@@ -1714,7 +1721,11 @@ function handleRemoveFormat(e) {
 function handleSPSelect(e) {
   const field = e.target.dataset.field;
   const value = e.target.value;
-  state.salesProm[field] = value;
+  if (field === 'duration') {
+    state.salesProm.duration = parseFloat(value) || 0;
+  } else {
+    state.salesProm[field] = value;
+  }
   if (field === 'mechanic' && !value) {
     state.salesProm.incentive = '';
     state.salesProm.prizeFund = 0;
