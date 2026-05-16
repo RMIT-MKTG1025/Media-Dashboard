@@ -429,6 +429,7 @@ const QTY_SENDS = [1, 2, 3, 4, 5, 6, 8, 10, 12];
 const QTY_DAYS = [1, 2, 3, 4, 5, 7, 10, 14];
 const QTY_CAMPAIGNS = [1, 2];
 const QTY_SP_DURATION = [1, 2, 3, 4, 6, 8, 10, 12];
+const QTY_SP_PRIZE = [1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000];
 
 /* CPM impression tiers, by inventory availability */
 
@@ -862,6 +863,38 @@ function calcSlotSubtotal(slot) {
 
 function calcSPSubtotal(sp) {
   return (parseFloat(sp.prizeFund) || 0) + (parseFloat(sp.adminCost) || 0);
+}
+
+/* Generate admin/logistics dropdown options. Larger prize fund and longer duration
+   means more legal, T&Cs, fulfilment, and agency coordination, so options scale up.
+   Returns 4 options: Minimal, Standard, Generous, High-touch. */
+function computeAdminOptions(prizeFund, duration) {
+  if (!prizeFund || !duration) return [];
+  let durationFactor;
+  if (duration <= 2) durationFactor = 0.7;
+  else if (duration <= 4) durationFactor = 1.0;
+  else if (duration <= 8) durationFactor = 1.2;
+  else if (duration <= 12) durationFactor = 1.4;
+  else durationFactor = 1.6;
+  const baseAdmin = Math.max(2500, prizeFund * 0.25 * durationFactor);
+  let roundStep;
+  if (baseAdmin < 5000) roundStep = 500;
+  else if (baseAdmin < 25000) roundStep = 1000;
+  else if (baseAdmin < 100000) roundStep = 5000;
+  else roundStep = 10000;
+  const multipliers = [0.7, 1.0, 1.5, 2.0];
+  const labels = ['Minimal', 'Standard', 'Generous', 'High-touch'];
+  const opts = multipliers.map((m, i) => ({
+    amount: Math.round((baseAdmin * m) / roundStep) * roundStep,
+    label: labels[i]
+  }));
+  // Remove duplicates if rounding collapses adjacent multipliers
+  const seen = new Set();
+  return opts.filter(o => {
+    if (seen.has(o.amount)) return false;
+    seen.add(o.amount);
+    return true;
+  });
 }
 
 function calcTotal() {
@@ -1461,24 +1494,38 @@ function renderSalesPromotion() {
     </div>
     <div class="field-row">
       <div class="field-group">
-        <label for="sp-pf">Prize fund ($)</label>
-        <input type="number" id="sp-pf" data-target="sp" data-field="prizeFund" min="0" step="1" value="${sp.prizeFund || ''}" placeholder="0">
+        <label for="sp-pf">Prize fund</label>
+        <select id="sp-pf" data-target="sp" data-field="prizeFund">
+          <option value="">Select prize fund</option>
+          ${QTY_SP_PRIZE.map(o => `<option value="${o}"${sp.prizeFund == o ? ' selected' : ''}>${fmt(o)}</option>`).join('')}
+        </select>
         <div class="field-help">Total value of all prizes or incentives given to consumers.</div>
       </div>
       <div class="field-group">
-        <label for="sp-ac">Admin or logistics cost ($)</label>
-        <input type="number" id="sp-ac" data-target="sp" data-field="adminCost" min="0" step="1" value="${sp.adminCost || ''}" placeholder="0">
-        <div class="field-help">Cost of running the promotion: legal, terms and conditions, fulfilment, point of sale, agency fees.</div>
+        <label for="sp-dur">Duration (weeks)</label>
+        <select id="sp-dur" data-target="sp" data-field="duration">
+          <option value="">Select duration</option>
+          ${QTY_SP_DURATION.map(o => `<option value="${o}"${sp.duration == o ? ' selected' : ''}>${o} week${o > 1 ? 's' : ''}</option>`).join('')}
+        </select>
       </div>
     </div>
-    <div class="field-group">
-      <label for="sp-dur">Duration (weeks)</label>
-      <select id="sp-dur" data-target="sp" data-field="duration">
-        <option value="">Select duration</option>
-        ${QTY_SP_DURATION.map(o => `<option value="${o}"${sp.duration == o ? ' selected' : ''}>${o} week${o > 1 ? 's' : ''}</option>`).join('')}
-      </select>
-    </div>
   `;
+
+  // Admin / logistics appears only after prize fund and duration are chosen,
+  // because the options scale based on the combination.
+  if (sp.prizeFund > 0 && sp.duration > 0) {
+    const adminOptions = computeAdminOptions(sp.prizeFund, sp.duration);
+    html += `
+      <div class="field-group">
+        <label for="sp-ac">Admin or logistics cost</label>
+        <select id="sp-ac" data-target="sp" data-field="adminCost">
+          <option value="">Select admin and logistics level</option>
+          ${adminOptions.map(o => `<option value="${o.amount}"${sp.adminCost == o.amount ? ' selected' : ''}>${o.label}: ${fmt(o.amount)}</option>`).join('')}
+        </select>
+        <div class="field-help">Admin and logistics covers legal, T&Cs, fulfilment, point of sale, and agency fees. Options scale with prize fund and duration: larger prizes and longer promotions need more admin support.</div>
+      </div>
+    `;
+  }
 
   if (subtotal > 0) {
     html += `<div class="subtotal-display"><span class="label">Sales promotion subtotal</span><span class="value">${fmt(subtotal)}</span></div>`;
@@ -1721,10 +1768,15 @@ function handleRemoveFormat(e) {
 function handleSPSelect(e) {
   const field = e.target.dataset.field;
   const value = e.target.value;
-  if (field === 'duration') {
-    state.salesProm.duration = parseFloat(value) || 0;
+  if (field === 'duration' || field === 'prizeFund' || field === 'adminCost') {
+    state.salesProm[field] = parseFloat(value) || 0;
   } else {
     state.salesProm[field] = value;
+  }
+  // When prize fund or duration changes, the admin options regenerate, so the
+  // previously selected admin cost may no longer be in the new option set.
+  if (field === 'prizeFund' || field === 'duration') {
+    state.salesProm.adminCost = 0;
   }
   if (field === 'mechanic' && !value) {
     state.salesProm.incentive = '';
