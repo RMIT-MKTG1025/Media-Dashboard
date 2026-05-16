@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MKTG1025 Media Plan Builder - RMIT University</title>
+<style>
+  /* ============================================================
+     RESET AND BASE
+     ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.6;
+    background: #fafafa;
+    font-size: 16px;
+  }
+  h1, h2, h3, h4 { margin: 0; font-weight: 500; line-height: 1.3; }
+  p { margin: 0 0 0.75rem; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+  .container { max-width: 920px; margin: 0 auto; padding: 0 1rem; }
+  header {
+    background: #fff;
+    border-bottom: 4px solid #ba372a;
+    padding: 1.5rem 0;
+    margin-bottom: 1.5rem;
+  }
+  header h1 {
+    font-size: 24px;
+    color: #ba372a;
+    margin-bottom: 4px;
+  }
+  header .subtitle {
+    font-size: 14px;
+    color: #6c6c6c;
+  }
+  main { padding-bottom: 3rem; }
+  footer {
+    border-top: 1px solid #e5e5e5;
+    padding: 1.5rem 0;
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 13px;
+    color: #6c6c6c;
+    background: #fff;
+  }
+
+  /* ============================================================
+     COMPONENTS
+     ============================================================ */
+  .intro-box {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .intro-box h2 { font-size: 16px; margin-bottom: 8px; }
+  .intro-box ol { margin: 8px 0 0; padding-left: 1.25rem; font-size: 14px; }
+  .intro-box li { margin-bottom: 4px; }
+
+  .slot-card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .slot-card .slot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .slot-card .slot-title { font-size: 17px; font-weight: 500; }
+  .slot-card .slot-subtotal { font-size: 15px; font-weight: 500; color: #1a1a1a; }
+  .slot-card .slot-subtotal-empty { font-size: 13px; color: #6c6c6c; font-weight: 400; }
+
+  .field-group { margin-bottom: 1rem; }
+  .field-group:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #444;
+    margin-bottom: 4px;
+  }
+  .field-help {
+    font-size: 12px;
+    color: #6c6c6c;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  select, input[type="text"], input[type="number"], textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    background: #fff;
+    color: #1a1a1a;
+    transition: border-color 0.15s ease;
+  }
+  select:hover, input:hover, textarea:hover { border-color: #999; }
+  select:focus, input:focus, textarea:focus {
+    outline: none;
+    border-color: #ba372a;
+    box-shadow: 0 0 0 2px rgba(186, 55, 42, 0.15);
+  }
+  textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+
+  .note-box {
+    background: #fef4f2;
+    border-left: 3px solid #ba372a;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin-top: 6px;
+    font-size: 13px;
+    color: #4a1f1a;
+    line-height: 1.5;
+  }
+  .note-box strong { color: #ba372a; }
+
+  .rate-display {
+    background: #f4f4f4;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    font-size: 13px;
+    color: #444;
+  }
+  .rate-display strong { color: #1a1a1a; }
+
+  .subtotal-display {
+    background: #f4f4f4;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .subtotal-display .label { font-size: 13px; color: #6c6c6c; }
+  .subtotal-display .value { font-size: 16px; font-weight: 500; }
+
+  /* Budget summary bar */
+  .budget-bar {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .budget-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .budget-row:last-of-type { margin-bottom: 0; }
+  .budget-row .label { font-size: 14px; color: #444; }
+  .budget-row .value-total { font-size: 26px; font-weight: 500; }
+  .budget-row .value-remaining { font-size: 15px; font-weight: 500; }
+  .status-bar {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    display: none;
+    line-height: 1.4;
+  }
+  .status-success { background: #e6f4ea; color: #197a3c; }
+  .status-warning { background: #fef3e2; color: #b87900; }
+  .status-danger { background: #fce8ea; color: #b8001f; }
+
+  /* Buttons */
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border: 1px solid #ba372a;
+    border-radius: 6px;
+    background: #ba372a;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+  }
+  button:hover:not(:disabled) { background: #9a2d22; }
+  button:active:not(:disabled) { transform: scale(0.98); }
+  button:disabled {
+    background: #d4d4d4;
+    border-color: #d4d4d4;
+    color: #888;
+    cursor: not-allowed;
+  }
+  button.btn-secondary {
+    background: #fff;
+    color: #ba372a;
+    border-color: #ba372a;
+  }
+  button.btn-secondary:hover:not(:disabled) {
+    background: #fef4f2;
+  }
+  button.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  .generate-btn-wrapper {
+    text-align: center;
+    margin: 1.5rem 0;
+  }
+  #generate-btn {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 16px;
+  }
+
+  /* Output table */
+  #output { display: none; margin-top: 2rem; }
+  .output-card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+  }
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .output-header h2 { font-size: 18px; }
+  table.plan-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  table.plan-table th, table.plan-table td {
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 1px solid #e5e5e5;
+    vertical-align: top;
+  }
+  table.plan-table th {
+    font-weight: 500;
+    background: #f9f9f9;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+  }
+  table.plan-table .num { text-align: right; white-space: nowrap; }
+  table.plan-table tr.total-row { font-weight: 500; background: #f9f9f9; }
+  table.plan-table tr.total-row td { border-bottom: none; }
+  .copy-hint {
+    font-size: 12px;
+    color: #6c6c6c;
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
+  /* Validation message in output area */
+  .validation-error {
+    background: #fce8ea;
+    color: #b8001f;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 1rem;
+    font-size: 13px;
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: #fff; }
+    header, footer, #generate-btn, .copy-btn, .intro-box { display: none; }
+    .slot-card, .budget-bar, .output-card { border: 1px solid #ccc; box-shadow: none; }
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    .container { padding: 0 0.75rem; }
+    header h1 { font-size: 20px; }
+    .slot-card { padding: 1rem; }
+    .budget-row .value-total { font-size: 22px; }
+    table.plan-table { font-size: 12px; }
+    table.plan-table th, table.plan-table td { padding: 6px 4px; }
+  }
+
+  /* Screen reader only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>MKTG1025 Media Plan Builder</h1>
+    <div class="subtitle">Section 5.5 - Assessment 3 - Marketing Plan Part B</div>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="intro-box" role="region" aria-labelledby="how-to-heading">
+    <h2 id="how-to-heading">How to use this tool</h2>
+    <ol>
+      <li>Choose two media formats that reach your target persona from Section 1.1.</li>
+      <li>For each format, complete every field including the strategic rationale.</li>
+      <li>Your total spend across both formats must not exceed $1,000,000.</li>
+      <li>Generate your plan and paste the table into Section 5.5 of your report.</li>
+      <li>Take a screenshot of your completed dashboard for your appendix.</li>
+    </ol>
+  </div>
+
+  <div id="slots" aria-label="Media format slots"></div>
+
+  <div class="budget-bar" role="region" aria-label="Budget summary">
+    <div class="budget-row">
+      <span class="label">Total allocated</span>
+      <span class="value-total" id="total-display">$0</span>
+    </div>
+    <div class="budget-row">
+      <span class="label">Remaining of $1,000,000</span>
+      <span class="value-remaining" id="remaining-display">$1,000,000</span>
+    </div>
+    <div class="status-bar" id="status-bar" role="status"></div>
+  </div>
+
+  <div class="generate-btn-wrapper">
+    <button id="generate-btn" disabled>Generate media plan</button>
+  </div>
+
+  <div id="output" aria-live="polite"></div>
+
+</main>
+
+<footer>
+  <div class="container">
+    MKTG1025 Marketing Principles - RMIT University, College of Business and Law
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   MEDIA DATA - RATE CARDS
+   ============================================================
+   All rates are pedagogically calibrated for first-year teaching.
+   In practice, real rates vary by network, publisher, audience
+   targeting, frequency, and negotiation. For this assessment,
+   variations are disregarded.
+   ============================================================ */
+
+const BUDGET_CAP = 1000000;
+
+const MEDIA = {
+
+  /* ---------- TELEVISION ---------- */
+  tv: {
+    name: 'Television',
+    subtypes: [
+      { id: 'news', name: 'News and current affairs', examples: 'Seven News, 9News, 10 News First, Sunrise, Today, The Project' },
+      { id: 'sport', name: 'Sport', examples: 'AFL, NRL, cricket, tennis, Olympics, A-League, NBL' },
+      { id: 'reality', name: 'Reality and lifestyle', examples: 'MasterChef, The Block, MAFS, Selling Houses Australia' },
+      { id: 'drama', name: 'Drama and entertainment', examples: 'Australian and international drama series, telemovies' },
+      { id: 'comedy', name: 'Comedy and panel shows', examples: 'Have You Been Paying Attention, Hard Quiz, Gruen' },
+      { id: 'food', name: 'Food and cooking', examples: 'MasterChef, MKR, dedicated lifestyle channels' },
+      { id: 'children', name: 'Children and family', examples: 'Commercial children programming on 9Go!, 10 Shake, Nick Jr' }
+    ],
+    formats: [
+      { id: 'tv-15p', name: '15 second spot, Peak', rate: 3000, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-15op', name: '15 second spot, Off Peak', rate: 1000, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-30p', name: '30 second spot, Peak', rate: 10000, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-30op', name: '30 second spot, Off Peak', rate: 3000, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-45p', name: '45 second spot, Peak', rate: 12000, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-45op', name: '45 second spot, Off Peak', rate: 4500, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-60p', name: '60 second spot, Peak', rate: 20000, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-60op', name: '60 second spot, Off Peak', rate: 6000, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-ipc-p', name: 'In-program content, Peak', rate: 40000, unit: 'per insertion', qtyLabel: 'Number of placements' },
+      { id: 'tv-ipc-op', name: 'In-program content, Off Peak', rate: 10000, unit: 'per insertion', qtyLabel: 'Number of placements' },
+      { id: 'tv-drtv-p', name: 'DRTV, Peak', rate: 3000, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-drtv-op', name: 'DRTV, Off Peak', rate: 1000, unit: 'per insertion', qtyLabel: 'Number of insertions' },
+      { id: 'tv-spons-p', name: 'Sponsorship, Peak', rate: 25000, unit: 'per insertion', qtyLabel: 'Number of programme sponsorships' },
+      { id: 'tv-spons-op', name: 'Sponsorship, Off Peak', rate: 10000, unit: 'per insertion', qtyLabel: 'Number of programme sponsorships' }
+    ],
+    metrics: [
+      'Reach (% of target audience exposed)',
+      'Frequency (average exposures per viewer)',
+      'TARPs (Target Audience Rating Points)',
+      'Cost per thousand (CPM)',
+      'Aided recall',
+      'Brand consideration uplift'
+    ],
+    note: 'ABC and ABC iview do not accept advertising. Most SBS channels and SBS On Demand do not accept advertising (SBS Food and selected SBS programming do). For this assessment, focus on commercial networks (Seven, Nine, Ten, Foxtel) and their BVOD or AVOD equivalents.'
+  },
+
+  /* ---------- AUDIO (RADIO) ---------- */
+  audio: {
+    name: 'Audio (radio and podcast)',
+    subtypes: [
+      { id: 'talk', name: 'Talk and news', examples: '3AW, 2GB, 4BC, ABC Radio (no ads), podcast news' },
+      { id: 'chr', name: 'Contemporary hits radio (CHR)', examples: 'Nova, KIIS FM, hit network' },
+      { id: 'ac', name: 'Adult contemporary', examples: 'smoothfm, Mix, WSFM' },
+      { id: 'rock', name: 'Rock and alternative', examples: 'Triple M, Triple J (no ads)' },
+      { id: 'classic', name: 'Classic hits and gold', examples: 'Gold, Magic, classic rock formats' },
+      { id: 'sportstalk', name: 'Sport talk', examples: 'SEN, Macquarie Sports Radio' },
+      { id: 'podcast', name: 'Podcasts and digital audio', examples: 'LiSTNR, Spotify, Apple Podcasts, ARN podcasts' }
+    ],
+    formats: [
+      { id: 'au-bf-met', name: 'Breakfast (Morning drive), Major Metro', rate: 450, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-bf-reg', name: 'Breakfast (Morning drive), Regional', rate: 275, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-mor-met', name: 'Morning, Major Metro', rate: 400, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-mor-reg', name: 'Morning, Regional', rate: 225, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-aft-met', name: 'Afternoon, Major Metro', rate: 350, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-aft-reg', name: 'Afternoon, Regional', rate: 200, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-dr-met', name: 'Drive (Afternoon drive), Major Metro', rate: 425, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-dr-reg', name: 'Drive (Afternoon drive), Regional', rate: 250, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-ev-met', name: 'Evening, Major Metro', rate: 250, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-ev-reg', name: 'Evening, Regional', rate: 150, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-on-met', name: 'Overnight, Major Metro', rate: 150, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-on-reg', name: 'Overnight, Regional', rate: 80, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-wk-met', name: 'Weekends, Major Metro', rate: 300, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' },
+      { id: 'au-wk-reg', name: 'Weekends, Regional', rate: 150, unit: 'per insertion', qtyLabel: 'Number of 30-second spots' }
+    ],
+    metrics: [
+      'Cume audience (cumulative unique listeners)',
+      'Average quarter hour (AQH)',
+      'Listening hours',
+      'Cost per thousand (CPM)',
+      'Spot recall',
+      'Listener engagement'
+    ],
+    note: 'ABC Radio and Triple J do not accept advertising. Focus on commercial networks (ARN, Nine Radio, SCA) and commercial podcast networks (LiSTNR, ARN podcasts) and ad-supported streaming audio (Spotify).'
+  },
+
+  /* ---------- OUT OF HOME (OOH) ---------- */
+  ooh: {
+    name: 'Out of Home (OOH)',
+    subtypes: [
+      { id: 'roadside', name: 'Roadside', examples: 'Billboards, free-standing panels, street furniture' },
+      { id: 'transport', name: 'Public transport', examples: 'Bus, tram, train, taxi advertising' },
+      { id: 'retail', name: 'Retail and shopping', examples: 'Shopping centres, grocery store displays' },
+      { id: 'airport', name: 'Airport', examples: 'External and internal airport advertising' },
+      { id: 'cinema', name: 'Cinema', examples: 'Pre-feature cinema advertising' },
+      { id: 'university', name: 'University and education', examples: 'On-campus posters and panels' }
+    ],
+    formats: [
+      { id: 'oh-bb-l', name: 'Billboard, low visibility', rate: 5000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-bb-m', name: 'Billboard, medium visibility', rate: 10000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-bb-h', name: 'Billboard, high visibility', rate: 20000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-shel', name: 'Bus or tram shelter', rate: 5000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-kiosk', name: 'Kiosk or phone booth', rate: 1000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-fsp-l', name: 'Free-standing panel, low foot traffic', rate: 2000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-fsp-h', name: 'Free-standing panel, high foot traffic', rate: 4000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-train', name: 'Train wrap', rate: 50000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-bti', name: 'Bus or tram internal', rate: 2000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months) per vehicle' },
+      { id: 'oh-bte', name: 'Bus or tram external wrap', rate: 30000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months) per vehicle' },
+      { id: 'oh-airx', name: 'Airport external billboard', rate: 20000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-airi', name: 'Airport internal', rate: 10000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-sc-m', name: 'Shopping centre, medium traffic', rate: 10000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-sc-h', name: 'Shopping centre, high traffic', rate: 20000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-uni', name: 'University campus', rate: 3000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-cin', name: 'Cinema', rate: 5000, unit: 'per month', qtyLabel: 'Number of 28-day periods (months)' },
+      { id: 'oh-gro', name: 'Grocery store in-store display', rate: 30000, unit: 'per week', qtyLabel: 'Number of weeks' }
+    ],
+    metrics: [
+      'Daily traffic count',
+      'Frequency',
+      'Cost per thousand (CPM)',
+      'Viewable opportunities (eyes-on)',
+      'Aided recall'
+    ]
+  },
+
+  /* ---------- DISPLAY, SEO AND SEM ---------- */
+  display: {
+    name: 'Display, SEO and SEM',
+    subtypes: [
+      {
+        id: 'news-pub',
+        name: 'News and current affairs publishers',
+        examples: 'news.com.au, smh.com.au, theage.com.au, abc.net.au'
+      },
+      {
+        id: 'lifestyle-pub',
+        name: 'Lifestyle and entertainment publishers',
+        examples: 'mamamia.com.au, popsugar.com.au, who.com.au'
+      },
+      {
+        id: 'sport-pub',
+        name: 'Sport publishers',
+        examples: 'afl.com.au, nrl.com, foxsports.com.au, espn.com.au'
+      },
+      {
+        id: 'food-pub',
+        name: 'Food and recipe publishers',
+        examples: 'taste.com.au, delicious.com.au, recipetineats.com'
+      },
+      {
+        id: 'business-pub',
+        name: 'Business and finance publishers',
+        examples: 'afr.com, businessinsider.com.au, smartcompany.com.au'
+      },
+      {
+        id: 'email-news',
+        name: 'Email and newsletter advertising',
+        examples: 'EDM Solus campaigns, branded newsletter sponsorships',
+        formats: [
+          { id: 'dp-edm', name: 'EDM Solus email (5,000 members per send)', rate: 1500, unit: 'per send', qtyLabel: 'Number of sends' },
+          { id: 'dp-nl', name: 'Newsletter advertising (5,000 members per send)', rate: 800, unit: 'per send', qtyLabel: 'Number of sends' }
+        ]
+      }
+    ],
+    formats: [
+      { id: 'dp-bb', name: 'Billboard (970x250) or Leaderboard (728x90)', rate: 30, unit: 'CPM', qtyLabel: 'Total impressions' },
+      { id: 'dp-sky', name: 'Skyscraper (120x600 or 160x600)', rate: 25, unit: 'CPM', qtyLabel: 'Total impressions' },
+      { id: 'dp-hp', name: 'Half Page (300x600) or MREC (300x250)', rate: 35, unit: 'CPM', qtyLabel: 'Total impressions' },
+      { id: 'dp-rb', name: 'Roadblock', rate: 100, unit: 'CPM', qtyLabel: 'Total impressions' },
+      { id: 'dp-mb', name: 'Mobile banner', rate: 15, unit: 'CPM', qtyLabel: 'Total impressions' },
+      { id: 'dp-mmrec', name: 'Mobile MREC', rate: 25, unit: 'CPM', qtyLabel: 'Total impressions' },
+      { id: 'dp-hi', name: 'High Impact format (homepage takeover)', rate: 150, unit: 'CPM', qtyLabel: 'Total impressions' }
+    ],
+    metrics: [
+      'Click-through rate (CTR)',
+      'Viewability rate',
+      'Video completion rate (VCR)',
+      'Cost per click (CPC)',
+      'Cost per thousand (CPM)',
+      'Conversion rate'
+    ]
+  },
+
+  /* ---------- MAGAZINE ---------- */
+  magazine: {
+    name: 'Magazine',
+    subtypes: [
+      {
+        id: 'mag-women',
+        name: 'Women\'s lifestyle',
+        examples: 'Australian Women\'s Weekly, Marie Claire Australia, Vogue Australia, Harper\'s Bazaar Australia'
+      },
+      {
+        id: 'mag-men',
+        name: 'Men\'s lifestyle',
+        examples: 'Men\'s Health Australia, GQ Australia'
+      },
+      {
+        id: 'mag-home',
+        name: 'Home, garden and interiors',
+        examples: 'Better Homes and Gardens, Home Beautiful, House and Garden, Vogue Living, Inside Out, Belle, Real Living'
+      },
+      {
+        id: 'mag-food',
+        name: 'Food and cooking',
+        examples: 'Delicious., Gourmet Traveller, Donna Hay, Australian Women\'s Weekly Food'
+      },
+      {
+        id: 'mag-parent',
+        name: 'Parenting and family',
+        examples: 'Practical Parenting, Bounty Parents'
+      },
+      {
+        id: 'mag-health',
+        name: 'Health and fitness',
+        examples: 'Women\'s Health Australia, Men\'s Health Australia, Prevention Australia'
+      },
+      {
+        id: 'mag-specialty',
+        name: 'Specialty interest',
+        examples: 'Australian Geographic, Wheels, Country Style, Australian Traveller, Gardening Australia'
+      }
+    ],
+    formats: [
+      { id: 'mg-fp', name: 'Full page colour', rate: 15000, unit: 'per insertion', qtyLabel: 'Number of insertions (issues)' },
+      { id: 'mg-hp', name: 'Half page colour', rate: 8000, unit: 'per insertion', qtyLabel: 'Number of insertions (issues)' },
+      { id: 'mg-qp', name: 'Quarter page colour', rate: 4500, unit: 'per insertion', qtyLabel: 'Number of insertions (issues)' },
+      { id: 'mg-dps', name: 'Double page spread', rate: 25000, unit: 'per insertion', qtyLabel: 'Number of insertions (issues)' },
+      { id: 'mg-ifc', name: 'Inside front cover', rate: 22000, unit: 'per insertion', qtyLabel: 'Number of insertions (issues)' },
+      { id: 'mg-obc', name: 'Outside back cover', rate: 28000, unit: 'per insertion', qtyLabel: 'Number of insertions (issues)' },
+      { id: 'mg-adv', name: 'Advertorial (sponsored content)', rate: 18000, unit: 'per insertion', qtyLabel: 'Number of insertions (issues)' }
+    ],
+    metrics: [
+      'Circulation (paid copies)',
+      'Readership (total readers including pass-on)',
+      'Pass-on rate',
+      'Cost per thousand readers',
+      'Engagement time'
+    ]
+  },
+
+  /* ---------- SOCIAL MEDIA ---------- */
+  social: {
+    name: 'Social Media',
+    subtypes: [
+      {
+        id: 'sm-meta',
+        name: 'Meta (Facebook and Instagram)',
+        examples: 'Broad reach across Australian adults, strong on family and lifestyle audiences',
+        formats: [
+          { id: 'sm-meta-feed', name: 'In-feed ad', rate: 8, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-meta-story', name: 'Stories ad', rate: 10, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-meta-reel', name: 'Reels ad', rate: 12, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-meta-car', name: 'Carousel ad', rate: 9, unit: 'CPM', qtyLabel: 'Total impressions' }
+        ]
+      },
+      {
+        id: 'sm-tiktok',
+        name: 'TikTok',
+        examples: 'Younger skewed audience, short-form video first',
+        formats: [
+          { id: 'sm-tt-feed', name: 'In-feed ad', rate: 10, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-tt-spark', name: 'Spark Ads (boost existing posts)', rate: 8, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-tt-tv', name: 'TopView (first ad of day)', rate: 50, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-tt-bhc', name: 'Branded Hashtag Challenge (6-day campaign)', rate: 250000, unit: 'flat', qtyLabel: 'Number of campaigns' }
+        ]
+      },
+      {
+        id: 'sm-yt',
+        name: 'YouTube',
+        examples: 'Long and short-form video, strong reach across most demographics',
+        formats: [
+          { id: 'sm-yt-tv', name: 'TrueView skippable in-stream', rate: 15, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-yt-ns', name: 'Non-skippable in-stream', rate: 30, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-yt-bump', name: 'Bumper ad (6 second non-skippable)', rate: 20, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-yt-shorts', name: 'YouTube Shorts ad', rate: 12, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-yt-mast', name: 'Masthead (homepage takeover)', rate: 80000, unit: 'flat', qtyLabel: 'Number of days' }
+        ]
+      },
+      {
+        id: 'sm-pin',
+        name: 'Pinterest',
+        examples: 'Discovery-led, strong on home, food, fashion, and parenting audiences',
+        formats: [
+          { id: 'sm-pin-std', name: 'Standard Pin ad', rate: 12, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-pin-vid', name: 'Video Pin ad', rate: 18, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-pin-car', name: 'Carousel Pin ad', rate: 14, unit: 'CPM', qtyLabel: 'Total impressions' }
+        ]
+      },
+      {
+        id: 'sm-snap',
+        name: 'Snapchat',
+        examples: 'Younger skewed audience, ephemeral and AR-led formats',
+        formats: [
+          { id: 'sm-sn-snap', name: 'Snap ad', rate: 9, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-sn-story', name: 'Story ad', rate: 11, unit: 'CPM', qtyLabel: 'Total impressions' },
+          { id: 'sm-sn-lens', name: 'AR Lens or Filter (national, per day)', rate: 50000, unit: 'flat', qtyLabel: 'Number of days' }
+        ]
+      }
+    ],
+    formats: [],
+    metrics: [
+      'Engagement rate (likes, comments, shares per impression)',
+      'Video completion rate (VCR)',
+      'Click-through rate (CTR)',
+      'Cost per click (CPC)',
+      'Cost per thousand (CPM)',
+      'Reach',
+      'Follower growth'
+    ]
+  }
+
+};
+
+const OBJECTIVES = [
+  { id: 'informative', name: 'Informative advertising' },
+  { id: 'persuasive', name: 'Persuasive advertising' },
+  { id: 'reminder', name: 'Reminder advertising' }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+
+const state = {
+  slot1: { channel: '', subtype: '', format: '', qty: 0, objective: '', metric: '', metricCustom: '', rationale: '' },
+  slot2: { channel: '', subtype: '', format: '', qty: 0, objective: '', metric: '', metricCustom: '', rationale: '' }
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function fmt(n) {
+  return '$' + Math.round(n).toLocaleString('en-AU');
+}
+
+function getSubtype(channelId, subtypeId) {
+  if (!channelId || !subtypeId) return null;
+  return MEDIA[channelId].subtypes.find(s => s.id === subtypeId) || null;
+}
+
+function getAvailableFormats(channelId, subtypeId) {
+  if (!channelId) return [];
+  const subtype = getSubtype(channelId, subtypeId);
+  if (subtype && subtype.formats && subtype.formats.length > 0) return subtype.formats;
+  return MEDIA[channelId].formats || [];
+}
+
+function getFormat(channelId, subtypeId, formatId) {
+  if (!channelId || !formatId) return null;
+  const formats = getAvailableFormats(channelId, subtypeId);
+  return formats.find(f => f.id === formatId) || null;
+}
+
+function calcSubtotal(slot) {
+  const f = getFormat(slot.channel, slot.subtype, slot.format);
+  if (!f || !slot.qty) return 0;
+  if (f.unit === 'CPM') return (slot.qty / 1000) * f.rate;
+  return slot.qty * f.rate;
+}
+
+function getEffectiveMetric(slot) {
+  return slot.metric === '__custom' ? slot.metricCustom : slot.metric;
+}
+
+function isSlotComplete(slot) {
+  if (!slot.channel || !slot.subtype || !slot.format || !slot.qty || slot.qty <= 0) return false;
+  if (!slot.objective) return false;
+  const metric = getEffectiveMetric(slot);
+  if (!metric || !metric.trim()) return false;
+  if (!slot.rationale || !slot.rationale.trim()) return false;
+  return true;
+}
+
+function isPlanValid() {
+  const total = calcSubtotal(state.slot1) + calcSubtotal(state.slot2);
+  return isSlotComplete(state.slot1) && isSlotComplete(state.slot2) && total <= BUDGET_CAP;
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+
+function renderSlot(num) {
+  const slot = state['slot' + num];
+  const channel = slot.channel ? MEDIA[slot.channel] : null;
+  const subtype = getSubtype(slot.channel, slot.subtype);
+  const format = getFormat(slot.channel, slot.subtype, slot.format);
+  const subtotal = calcSubtotal(slot);
+  const showSubtype = slot.channel;
+  const showFormat = slot.channel && slot.subtype;
+  const showQty = slot.channel && slot.subtype && slot.format;
+  const showObjective = showQty && slot.qty > 0;
+  const showMetric = showObjective && slot.objective;
+  const metricValue = getEffectiveMetric(slot);
+  const showRationale = showMetric && metricValue && metricValue.trim();
+
+  let html = `
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">Media format ${num}</span>
+        ${slot.qty > 0 && format
+          ? `<span class="slot-subtotal">${fmt(subtotal)}</span>`
+          : `<span class="slot-subtotal-empty">No spend allocated</span>`}
+      </div>
+  `;
+
+  // ---- Channel ----
+  html += `
+    <div class="field-group">
+      <label for="ch-${num}">Media channel</label>
+      <select id="ch-${num}" data-slot="${num}" data-field="channel">
+        <option value="">Select a media channel</option>
+        ${Object.keys(MEDIA).map(k => 
+          `<option value="${k}"${slot.channel === k ? ' selected' : ''}>${MEDIA[k].name}</option>`
+        ).join('')}
+      </select>
+      ${channel && channel.note ? `<div class="note-box"><strong>Note:</strong> ${channel.note}</div>` : ''}
+    </div>
+  `;
+
+  // ---- Subtype ----
+  if (showSubtype) {
+    const subtypes = channel.subtypes || [];
+    html += `
+      <div class="field-group">
+        <label for="st-${num}">Sub-type (audience or genre context)</label>
+        <select id="st-${num}" data-slot="${num}" data-field="subtype">
+          <option value="">Select a sub-type</option>
+          ${subtypes.map(s => 
+            `<option value="${s.id}"${slot.subtype === s.id ? ' selected' : ''}>${s.name}</option>`
+          ).join('')}
+        </select>
+        ${subtype && subtype.examples ? `<div class="field-help">Examples: ${subtype.examples}</div>` : ''}
+        <div class="field-help"><em>If a specific programme, station, or publication is not listed, choose the sub-type that most closely matches what you intend to advertise in.</em></div>
+      </div>
+    `;
+  }
+
+  // ---- Format ----
+  if (showFormat) {
+    const formats = getAvailableFormats(slot.channel, slot.subtype);
+    html += `
+      <div class="field-group">
+        <label for="ft-${num}">Format and daypart</label>
+        <select id="ft-${num}" data-slot="${num}" data-field="format">
+          <option value="">Select a format</option>
+          ${formats.map(f => 
+            `<option value="${f.id}"${slot.format === f.id ? ' selected' : ''}>${f.name}</option>`
+          ).join('')}
+        </select>
+        ${format ? `<div class="rate-display"><strong>Rate:</strong> ${fmt(format.rate)} ${format.unit}</div>` : ''}
+      </div>
+    `;
+  }
+
+  // ---- Quantity ----
+  if (showQty) {
+    html += `
+      <div class="field-group">
+        <label for="qt-${num}">${format.qtyLabel}</label>
+        <input type="number" id="qt-${num}" data-slot="${num}" data-field="qty" min="0" step="1" value="${slot.qty || ''}" placeholder="Enter quantity">
+      </div>
+    `;
+  }
+
+  // ---- Subtotal display ----
+  if (showObjective) {
+    html += `
+      <div class="subtotal-display">
+        <span class="label">Subtotal for this format</span>
+        <span class="value">${fmt(subtotal)}</span>
+      </div>
+    `;
+  }
+
+  // ---- Advertising objective ----
+  if (showObjective) {
+    html += `
+      <div class="field-group">
+        <label for="ob-${num}">Advertising objective (from Section 5.2)</label>
+        <select id="ob-${num}" data-slot="${num}" data-field="objective">
+          <option value="">Select an objective</option>
+          ${OBJECTIVES.map(o => 
+            `<option value="${o.id}"${slot.objective === o.id ? ' selected' : ''}>${o.name}</option>`
+          ).join('')}
+        </select>
+        <div class="field-help">Which advertising objective does this media choice support?</div>
+      </div>
+    `;
+  }
+
+  // ---- Metric ----
+  if (showMetric) {
+    const metrics = channel.metrics || [];
+    html += `
+      <div class="field-group">
+        <label for="mt-${num}">Performance metric for this channel</label>
+        <select id="mt-${num}" data-slot="${num}" data-field="metric">
+          <option value="">Select a metric</option>
+          ${metrics.map(m => 
+            `<option value="${m}"${slot.metric === m ? ' selected' : ''}>${m}</option>`
+          ).join('')}
+          <option value="__custom"${slot.metric === '__custom' ? ' selected' : ''}>Other (specify)</option>
+        </select>
+        <div class="field-help">Choose the metric you will use to measure success for this channel.</div>
+        ${slot.metric === '__custom' ? `
+          <input type="text" id="mtc-${num}" data-slot="${num}" data-field="metricCustom" value="${escapeHtml(slot.metricCustom)}" placeholder="Type your own metric" style="margin-top: 8px;">
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // ---- Rationale ----
+  if (showRationale) {
+    html += `
+      <div class="field-group">
+        <label for="rt-${num}">Strategic rationale</label>
+        <textarea id="rt-${num}" data-slot="${num}" data-field="rationale" placeholder="Explain why this media format suits your campaign. Reference (1) your persona from Section 1.1, (2) how this format supports your Think, Feel, Do from Section 5.3, and (3) how it expresses your execution theme from Section 5.4.">${escapeHtml(slot.rationale)}</textarea>
+        <div class="field-help">Cover your persona link, your Think/Feel/Do, and your execution theme. Around three to five sentences.</div>
+      </div>
+    `;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function renderBudget() {
+  const total = calcSubtotal(state.slot1) + calcSubtotal(state.slot2);
+  const remaining = BUDGET_CAP - total;
+
+  document.getElementById('total-display').textContent = fmt(total);
+  document.getElementById('remaining-display').textContent = (remaining < 0 ? '-' : '') + fmt(Math.abs(remaining));
+
+  const status = document.getElementById('status-bar');
+  status.className = 'status-bar';
+  if (total === 0) {
+    status.style.display = 'none';
+  } else if (total > BUDGET_CAP) {
+    status.style.display = 'block';
+    status.classList.add('status-danger');
+    status.textContent = 'Over budget by ' + fmt(total - BUDGET_CAP) + '. Reduce quantity or change format before generating your plan.';
+  } else if (total > BUDGET_CAP * 0.95) {
+    status.style.display = 'block';
+    status.classList.add('status-warning');
+    status.textContent = 'Approaching budget cap. ' + fmt(remaining) + ' remaining.';
+  } else {
+    status.style.display = 'block';
+    status.classList.add('status-success');
+    status.textContent = 'Within budget. ' + fmt(remaining) + ' remaining.';
+  }
+
+  document.getElementById('generate-btn').disabled = !isPlanValid();
+}
+
+function renderAll() {
+  document.getElementById('slots').innerHTML = renderSlot(1) + renderSlot(2);
+  renderBudget();
+  attachListeners();
+}
+
+function attachListeners() {
+  // Select dropdowns: change events trigger full slot rebuild (because they change form structure)
+  document.querySelectorAll('select[data-slot]').forEach(el => {
+    el.addEventListener('change', (e) => {
+      const slotNum = e.target.dataset.slot;
+      const field = e.target.dataset.field;
+      const slot = state['slot' + slotNum];
+      const value = e.target.value;
+
+      if (field === 'channel') {
+        slot.channel = value;
+        slot.subtype = '';
+        slot.format = '';
+        slot.qty = 0;
+        slot.objective = '';
+        slot.metric = '';
+        slot.metricCustom = '';
+        slot.rationale = '';
+      } else if (field === 'subtype') {
+        slot.subtype = value;
+        slot.format = '';
+        slot.qty = 0;
+      } else if (field === 'format') {
+        slot.format = value;
+        slot.qty = 0;
+      } else if (field === 'objective') {
+        slot.objective = value;
+      } else if (field === 'metric') {
+        slot.metric = value;
+        if (value !== '__custom') slot.metricCustom = '';
+      }
+      renderAll();
+    });
+  });
+
+  // Number input (qty): rebuild slot on input to show/hide subsequent fields, but preserve cursor
+  document.querySelectorAll('input[type="number"][data-slot]').forEach(el => {
+    el.addEventListener('input', (e) => {
+      const slotNum = e.target.dataset.slot;
+      const slot = state['slot' + slotNum];
+      slot.qty = parseFloat(e.target.value) || 0;
+      const cursorPos = e.target.selectionStart;
+      renderAll();
+      const newEl = document.getElementById('qt-' + slotNum);
+      if (newEl) {
+        newEl.focus();
+        try { newEl.setSelectionRange(cursorPos, cursorPos); } catch (err) {}
+      }
+    });
+  });
+
+  // Text input and textarea (metricCustom, rationale): just update state and budget. No slot rebuild.
+  document.querySelectorAll('input[type="text"][data-slot], textarea[data-slot]').forEach(el => {
+    el.addEventListener('input', (e) => {
+      const slotNum = e.target.dataset.slot;
+      const field = e.target.dataset.field;
+      const slot = state['slot' + slotNum];
+      slot[field] = e.target.value;
+      renderBudget();
+    });
+  });
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+/* ============================================================
+   OUTPUT GENERATION
+   ============================================================ */
+
+function generatePlan() {
+  if (!isPlanValid()) return;
+
+  const rows = [1, 2].map(n => {
+    const s = state['slot' + n];
+    const ch = MEDIA[s.channel];
+    const st = getSubtype(s.channel, s.subtype);
+    const f = getFormat(s.channel, s.subtype, s.format);
+    const obj = OBJECTIVES.find(o => o.id === s.objective);
+    return {
+      channel: ch.name,
+      subtype: st.name,
+      format: f.name,
+      qty: s.qty,
+      rate: f.rate,
+      unit: f.unit,
+      subtotal: calcSubtotal(s),
+      objective: obj.name,
+      metric: getEffectiveMetric(s),
+      rationale: s.rationale
+    };
+  });
+
+  const total = rows[0].subtotal + rows[1].subtotal;
+
+  const tableHtml = `
+    <table class="plan-table" id="plan-table">
+      <thead>
+        <tr>
+          <th>Media channel</th>
+          <th>Sub-type</th>
+          <th>Format and daypart</th>
+          <th class="num">Quantity</th>
+          <th class="num">Rate</th>
+          <th class="num">Subtotal</th>
+          <th>Objective</th>
+          <th>Metric</th>
+          <th>Strategic rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr>
+            <td>${escapeHtml(r.channel)}</td>
+            <td>${escapeHtml(r.subtype)}</td>
+            <td>${escapeHtml(r.format)}</td>
+            <td class="num">${r.qty.toLocaleString('en-AU')}</td>
+            <td class="num">${fmt(r.rate)} ${escapeHtml(r.unit)}</td>
+            <td class="num">${fmt(r.subtotal)}</td>
+            <td>${escapeHtml(r.objective)}</td>
+            <td>${escapeHtml(r.metric)}</td>
+            <td>${escapeHtml(r.rationale)}</td>
+          </tr>
+        `).join('')}
+        <tr class="total-row">
+          <td colspan="5" style="text-align: right;">Total media budget</td>
+          <td class="num">${fmt(total)}</td>
+          <td colspan="3"></td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  const out = document.getElementById('output');
+  out.style.display = 'block';
+  out.innerHTML = `
+    <div class="output-card">
+      <div class="output-header">
+        <h2>Your media plan</h2>
+        <button class="btn-secondary btn-small" id="copy-btn">Copy table</button>
+      </div>
+      ${tableHtml}
+      <div class="copy-hint">Click "Copy table" then paste directly into Section 5.5 of your Word document. The table will retain its structure. Also take a screenshot of this dashboard for your Assessment 3 appendix.</div>
+    </div>
+  `;
+
+  document.getElementById('copy-btn').addEventListener('click', copyTable);
+
+  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyTable() {
+  const table = document.getElementById('plan-table');
+  if (!table) return;
+
+  // Try modern clipboard API first (works on HTTPS, including GitHub Pages)
+  const html = table.outerHTML;
+  const text = tableToText(table);
+
+  if (navigator.clipboard && window.ClipboardItem) {
+    const item = new ClipboardItem({
+      'text/html': new Blob([html], { type: 'text/html' }),
+      'text/plain': new Blob([text], { type: 'text/plain' })
+    });
+    navigator.clipboard.write([item]).then(showCopied).catch(fallbackCopy);
+  } else {
+    fallbackCopy();
+  }
+}
+
+function fallbackCopy() {
+  const table = document.getElementById('plan-table');
+  const range = document.createRange();
+  range.selectNode(table);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  try {
+    document.execCommand('copy');
+    showCopied();
+  } catch (e) {
+    alert('Copy failed. Please select the table manually and copy.');
+  }
+  sel.removeAllRanges();
+}
+
+function tableToText(table) {
+  const rows = table.querySelectorAll('tr');
+  return Array.from(rows).map(row => {
+    return Array.from(row.querySelectorAll('th, td')).map(cell => cell.textContent.trim()).join('\t');
+  }).join('\n');
+}
+
+function showCopied() {
+  const btn = document.getElementById('copy-btn');
+  const orig = btn.textContent;
+  btn.textContent = 'Copied';
+  setTimeout(() => { btn.textContent = orig; }, 2000);
+}
+
+/* ============================================================
+   INITIALISATION
+   ============================================================ */
+
+document.getElementById('generate-btn').addEventListener('click', generatePlan);
+renderAll();
+
+</script>
+
+</body>
+</html>
